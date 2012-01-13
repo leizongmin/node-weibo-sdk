@@ -89,13 +89,13 @@
 		// .....
 	});
 	
-	// 也可以创建一个调用某API的函数（仅针对当前用户）
+	// 也可以创建一个调用某API的函数（仅针对当前用户），并可设置默认参数
 	var friends_timeline = user.api('GET', 'statuses/friends timeline', {count: 100});
 	// 以后直接用 friends_timeline()即可
 	friends_timeline(function (err, data) {
 		// ...
 	});
-	// 或者这样
+	// 或者设置参数并调用
 	friends_timeline({max_id: 1234445664}, function (err, data) {
 		// ...
 	});
