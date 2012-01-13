@@ -26,20 +26,22 @@ var Weibo = function (options) {
   this.options.api_host = u.host;
   this.options.api_pathname = u.pathname || '';
   this.options.api_port = u.port;
-  this.options.callback_url_path = url.parse(this.options.callback_url).pathname;
+  this.options.callback_url_path = 
+    url.parse(this.options.callback_url).pathname;
 }
 util.inherits(Weibo, events.EventEmitter);
 
 /** 默认配置 */
 Weibo.prototype.init_options = function () {
   // 应用配置
-  this.options = { oauth_url:           '/oauth'                    // 本地获取授权url
-                 , callback_url:        'http://127.0.0.1/callback' // 回调地址
+  this.options = 
+      { oauth_url:           '/oauth'                    // 本地获取授权url
+      , callback_url:        'http://127.0.0.1/callback' // 回调地址
     
-                 , api_base:            'https://api.weibo.com'     // 新浪微博API地址
-                 , oauth2_authorize:    '/oauth2/authorize'         // 请求授权页面
-                 , oauth2_access_token: '/oauth2/access_token'      // 请求授权token
-  }
+      , api_base:            'https://api.weibo.com'     // 新浪微博API地址
+      , oauth2_authorize:    '/oauth2/authorize'         // 请求授权页面
+      , oauth2_access_token: '/oauth2/access_token'      // 请求授权token
+      }
 }
 
 /**
@@ -71,7 +73,8 @@ Weibo.prototype.listen_port = function (port) {
  *
  * @param {ServerRequest} request实例
  * @param {ServerResponse} response实例
- * @param {function} 回调函数  授权成功时第一个参数为User实例，授权失败或无法失败请求时为null
+ * @param {function} 回调函数  授权成功时第一个参数为User实例，授权失败或无法
+ *                             失败请求时为null
  */
 Weibo.prototype.httpListener = function (request, response, callback) {
   var rurl = request.url
@@ -83,26 +86,27 @@ Weibo.prototype.httpListener = function (request, response, callback) {
     , options = this.options
     , self = this;
   
-  // 转到授权页面
-  if ((rurl == ourl) ||
-      (rulen > oulen && rurl.substr(0, oulen + 1) == ourl + '?')) {
-     var request_url = options.api_base + options.oauth2_authorize + '?' +
-        'client_id=' + options.app_key + '&response_type=code' +
-        '&redirect_uri=' + escape(options.callback_url);
+  // 转到申请授权页面
+  if ((rurl == ourl)
+   || (rulen > oulen && rurl.substr(0, oulen + 1) == ourl + '?')) {
+     var request_url = options.api_base + options.oauth2_authorize + '?'
+                     + 'client_id=' + options.app_key + '&response_type=code'
+                     + '&redirect_uri=' + escape(options.callback_url);
      response.writeHead(302, {location: request_url});
      response.end();
   }
-  //  授权回调
+  
+  // 授权成功后的回调
   else if (rurl.substr(0, cbulen + 1) == cburl + '?') {
     var cbdata = querystring.parse(rurl.substr(cbulen + 1));
-    var params = {
-      code:        cbdata.code,
-      client_secret:    options.app_secret,
-      grant_type:      'authorization_code',
-      redirect_uri:    options.callback_url,
-      client_id:      options.app_key
+    var params = { code:           cbdata.code
+                 , client_secret:  options.app_secret
+                 , grant_type:     'authorization_code'
+                 , redirect_uri:   options.callback_url
+                 , client_id:      options.app_key
     }
-    this.request('POST', options.oauth2_access_token, params, function (err, data) {
+    this.request('POST', options.oauth2_access_token, params
+               , function (err, data) {
       // 授权失败
       if (err) {
         // 返回一个Error实例
@@ -139,7 +143,8 @@ Weibo.prototype.httpListener = function (request, response, callback) {
       }
     });
   }
-  // 未识别的请求
+  
+  // 未识别的请求，如果设置了refuse标记，则直接返回404
   else if (this.httpListener.refuse === true) {
     response.writeHead(404);
     response.end();
@@ -152,7 +157,8 @@ Weibo.prototype.httpListener = function (request, response, callback) {
 /**
  * 获取connect接口的中间件
  *
- * @param {function} callback 授权成功回调函数    function (用户信息, req, res, next)
+ * @param {function} callback 授权成功回调函数function
+ *                            参数格式： (用户信息, req, res, next)
  */
 Weibo.prototype.middleWare = function (callback) {
   var listener = this.httpListener.bind(this);
@@ -179,7 +185,7 @@ Weibo.prototype.middleWare = function (callback) {
 Weibo.prototype.request = function (method, apiname, params, callback) {
   var options = this.options;
   
-  // 组装
+  // 组装http.request()需要的参数
   method = method.toUpperCase();
   var opt= { host:    options.api_host || '127.0.0.1'
            , port:    options.api_port || 443
@@ -188,7 +194,7 @@ Weibo.prototype.request = function (method, apiname, params, callback) {
            , headers: {}
   }
   
-  // 发送请求
+  // 发送请求，如果为POST或PUT，则需要设置相应的headers
   if (method == 'POST' || method == 'PUT') {
     var data = querystring.stringify(params);
     opt.headers['content-length'] = data.length;
@@ -234,6 +240,7 @@ Weibo.prototype.sendRequest = function (options, data, callback) {
     console.log(err.stack);
     callback({error: err.stack});
   });
+  
   req.end(data);
 }
 

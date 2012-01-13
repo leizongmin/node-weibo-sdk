@@ -27,7 +27,8 @@ web.use(w.middleWare(function (user, req, res, next) {
   }
   
   // 测试调用API
-  var timeline = user.api('GET', 'statuses/home_timeline', {count: 10, screen_name:'mybot'});
+  var timeline = user.api('GET', 'statuses/home_timeline'
+                        , {count: 10, screen_name:'mybot'});
   console.log(timeline.toString());
   //user.get('statuses/friends_timeline/ids', {}, function (err, data) {
   timeline(function (err, data) {
