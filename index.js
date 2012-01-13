@@ -105,23 +105,31 @@ Weibo.prototype.httpListener = function (request, response, callback) {
 		this.request('POST', options.oauth2_access_token, params, function (err, data) {
 			// 授权失败
 			if (err) {
-				if (callback)
-					callback(null);
-					
-				var out = '获取授权失败！\n\n';
+				// 返回一个Error实例
+				var reterr = new Error(err.error_code + ' ' + err.error);
 				for (var i in err)
-					out += i + ': ' + err[i] + '\n';
-				response.end(out);
+					reterr[i] = err[i];				
+				// 触发fail事件，并传递当前err信息
+				self.emit('fail', reterr);	
+				// 回调
+				if (callback)
+					callback(reterr);
+				else {
+					var out = '获取授权失败！\n\n';
+					for (var i in err)
+						out += i + ': ' + err[i] + '\n';
+					response.end(out);
+				}
 			}
 			// 授权成功
 			else {
+				// 返回一个User实例
 				var user = new User(data, self);
 				// 触发aouth事件，并传递当前User实例
 				self.emit('oauth', user);
-				
-				if (callback) {
+				// 回调
+				if (callback)
 					callback(user);
-				}
 				else {
 					var out = '获取授权成功：\n\n';
 					for (var i in data)
@@ -150,10 +158,12 @@ Weibo.prototype.middleWare = function (callback) {
 	var listener = this.httpListener.bind(this);
 	return function (req, res, next) {
 		listener(req, res, function (user) {
-			if (user instanceof User)
-				callback(user, req, res, next);
+			// 如果返回null，则表示无法处理该请求，调用next()来传递下去
+			if (user ===null)
+				next();	
+			// 如果成功返回一个User实例或者Error信息时，则回调，需要自己判断是否出错
 			else
-				next();
+				callback(user, req, res, next);
 		});
 	}
 }
@@ -276,22 +286,28 @@ User.prototype.post = function (apiname, params, callback) {
  */
 User.prototype.api = function (method, apiname, params) {
 	var self = this;
+	params = params || {}
 	// 调用时传递两个参数
 	// 如：   friends_timeline_ids({count: 50}, function (err, data) { ...});
 	return function (_params, callback) {
+		// 如果仅有一个参数时
 		if (typeof _params == 'function') {
 			callback = _params;
 			_params = {}
 			for (var i in params)
 				_params[i] = params[i];
-			self[method.toLowerCase()](apiname, _params, callback);
 		}
+		// 有两个参数
 		else {
+			var nparams = {}
 			for (var i in params)
-				if (!(i in _params))
-					_params[i] = params[i];
-			self[method.toLowerCase()](apiname, _params, callback);
+				nparams[i] = params[i];
+			for (var i in _params)
+				nparams[i] = _params[i];
+			_params = nparams;
 		}
+		console.log(_params);
+		self[method.toLowerCase()](apiname, _params, callback);
 	}
 }
 

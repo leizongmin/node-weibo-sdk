@@ -23,6 +23,16 @@
 		*/
 	});
 	
+	// 监听事件，一般只用于统计获取授权情况
+	// 获取授权成功
+	app.on('oauth', function (user) {
+		// ...
+	});
+	// 获取授权失败
+	app.on('fail', function (err) {
+		// ...
+	});
+	
 	
 ### 2.本地测试
 
@@ -43,15 +53,22 @@
 使用本中间件接口可以在基于connect, express, quickweb等框架的web应用中处理获取微博授权请求。
 
 	// 调用 Weibo.middleWare()将返回一个中间件接口函数
-	// 当成功获取一个授权时，会返回该用户的User实例
+	// 当成功获取一个授权时，会返回该用户的User实例，如果失败则返回Error实例，需要自己判断
 	web.use(app.middleWare(function (user, req, res, next) {
-		user.get('statuses/friends_timeline/ids', {}, function (err, data) {
-			console.log(arguments);
-			if (err)
-				res.sendJSON(err);
-			else
-				res.sendJSON(data);
-		});
+		// 检查是否授权成功
+		if (user instanceof Error) {
+			res.end('获取授权失败！' + user.stack);
+		}
+		// 如果成功，则可直接通过返回的User实例来进行操作
+		else {
+			user.get('statuses/friends_timeline/ids', {}, function (err, data) {
+				console.log(arguments);
+				if (err)
+					res.sendJSON(err);
+				else
+					res.sendJSON(data);
+			});
+		}
 	}));
 	
 	

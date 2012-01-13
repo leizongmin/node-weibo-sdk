@@ -19,7 +19,15 @@ w.on('oauth', function (d) {
 web.createHttp();
 web.use(w.middleWare(function (user, req, res, next) {
 	console.log(user);
-	var friends_timeline_ids = user.api('GET', 'statuses/friends_timeline/ids');
+	
+	// 检查是否成功
+	if (user instanceof Error) {
+		res.end('出错了：' + user.stack);
+		return;
+	}
+	
+	// 测试调用API
+	var friends_timeline_ids = user.api('GET', 'statuses/friends_timeline/ids', {count: 200});
 	console.log(friends_timeline_ids.toString());
 	//user.get('statuses/friends_timeline/ids', {}, function (err, data) {
 	friends_timeline_ids(function (err, data) {
