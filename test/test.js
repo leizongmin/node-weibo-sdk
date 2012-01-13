@@ -19,7 +19,10 @@ w.on('oauth', function (d) {
 web.createHttp();
 web.use(w.middleWare(function (user, req, res, next) {
 	console.log(user);
-	user.get('statuses/friends_timeline/ids', {}, function (err, data) {
+	var friends_timeline_ids = user.api('GET', 'statuses/friends_timeline/ids');
+	console.log(friends_timeline_ids.toString());
+	//user.get('statuses/friends_timeline/ids', {}, function (err, data) {
+	friends_timeline_ids(function (err, data) {
 		console.log(arguments);
 		if (err)
 			res.sendJSON(err);

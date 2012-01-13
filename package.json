@@ -1,0 +1,14 @@
+{
+   "name":			"weibosdk",
+   "main":			"./index.js",
+   "version":		"0.0.1",
+   "description":	"Sina Weibo SDK V2",
+   "author": 		"leizongmin <leizongmin@gmail.com> (http://ucdok.com)",
+   "repository": {
+		"type":	 	"git",
+		"url": 		"git://github.com/leizongmin/node-weibo-sdk.git"
+	},
+	"engines": {
+		"node": 	">= 0.4.1"
+	}
+}

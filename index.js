@@ -12,7 +12,7 @@ var util = require('util');
 var events = require('events');
 
 /**
- * 创建服务器
+ * 创建应用
  *
  * @param {object} options 选项
  */
@@ -31,6 +31,7 @@ util.inherits(Weibo, events.EventEmitter);
 
 /** 默认配置 */
 Weibo.prototype.init_options = function () {
+	// 应用配置
 	this.options = {
 		oauth_url:			'/oauth',		// 本地获取授权url
 		callback_url:	'http://127.0.0.1/callback',	// 回调地址
@@ -42,7 +43,7 @@ Weibo.prototype.init_options = function () {
 }
 
 /**
- * 监听
+ * 监听（一般用于测试）
  *
  * @param {int|http.Server} port 端口或http实例
  */
@@ -67,6 +68,10 @@ Weibo.prototype.listen_port = function (port) {
 
 /**
  * 处理客户端请求
+ *
+ * @param {ServerRequest} request实例
+ * @param {ServerResponse} response实例
+ * @param {function} 回调函数  授权成功时第一个参数为User实例，授权失败或无法失败请求时为null
  */
 Weibo.prototype.httpListener = function (request, response, callback) {
 	var rurl = request.url;
@@ -100,6 +105,9 @@ Weibo.prototype.httpListener = function (request, response, callback) {
 		this.request('POST', options.oauth2_access_token, params, function (err, data) {
 			// 授权失败
 			if (err) {
+				if (callback)
+					callback(null);
+					
 				var out = '获取授权失败！\n\n';
 				for (var i in err)
 					out += i + ': ' + err[i] + '\n';
@@ -108,6 +116,7 @@ Weibo.prototype.httpListener = function (request, response, callback) {
 			// 授权成功
 			else {
 				var user = new User(data, self);
+				// 触发aouth事件，并传递当前User实例
 				self.emit('oauth', user);
 				
 				if (callback) {
@@ -122,9 +131,13 @@ Weibo.prototype.httpListener = function (request, response, callback) {
 			}
 		});
 	}
+	// 未识别的请求
 	else if (this.httpListener.refuse === true) {
 		response.writeHead(404);
 		response.end();
+	}
+	else {
+		callback(null);
 	}
 }
 
@@ -137,7 +150,10 @@ Weibo.prototype.middleWare = function (callback) {
 	var listener = this.httpListener.bind(this);
 	return function (req, res, next) {
 		listener(req, res, function (user) {
-			callback(user, req, res, next);
+			if (user instanceof User)
+				callback(user, req, res, next);
+			else
+				next();
 		});
 	}
 }
@@ -250,6 +266,36 @@ User.prototype.post = function (apiname, params, callback) {
 	this.server.request('POST', apiname + '.json', params, callback);
 }
 
+/**
+ * 生成调用API接口
+ *
+ * @param {string} method 请求方法GET|POST
+ * @param {string} apiname API名称
+ * @param {object} params 预加的参数
+ * @return {function}
+ */
+User.prototype.api = function (method, apiname, params) {
+	var self = this;
+	// 调用时传递两个参数
+	// 如：   friends_timeline_ids({count: 50}, function (err, data) { ...});
+	return function (_params, callback) {
+		if (typeof _params == 'function') {
+			callback = _params;
+			_params = {}
+			for (var i in params)
+				_params[i] = params[i];
+			self[method.toLowerCase()](apiname, _params, callback);
+		}
+		else {
+			for (var i in params)
+				if (!(i in _params))
+					_params[i] = params[i];
+			self[method.toLowerCase()](apiname, _params, callback);
+		}
+	}
+}
 
+
+// 模块输出
 exports.Weibo = Weibo;
 exports.User = User;
