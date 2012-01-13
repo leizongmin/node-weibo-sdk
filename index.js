@@ -312,7 +312,7 @@ User.prototype.api = function (method, apiname, params) {
         nparams[i] = _params[i];
       _params = nparams;
     }
-    console.log(_params);
+    // console.log(_params);
     self[method.toLowerCase()](apiname, _params, callback);
   }
 }
