@@ -1,6 +1,6 @@
 
 var Weibo = require('../index').Weibo;
-var web  = require('quickweb');
+var connect  = require('connect');
 
 w = new Weibo({
   app_key:  3740231829,
@@ -16,8 +16,8 @@ w.on('oauth', function (d) {
 });
 */
 
-web.createHttp();
-web.use(w.middleWare(function (user, req, res, next) {
+var app = connect();
+app.use(w.middleWare(function (user, req, res, next) {
   console.log(user);
   
   // 检查是否成功
@@ -39,4 +39,6 @@ web.use(w.middleWare(function (user, req, res, next) {
       res.sendJSON(data);
   });
 }));
+
+app.listen(80);
 
