@@ -1,5 +1,7 @@
 # 新浪微博API V2
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/leizongmin/node-weibo-sdk.svg)](https://greenkeeper.io/)
+
 仅支持新浪微博API V2版本，通过OAuth 2.0进行授权验证
 
  
